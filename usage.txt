@@ -1,0 +1,63 @@
+Usage: --action metrics|combine|extract|a3only|ubl|validate|validateExpectInvalid|validateExpectValid|visualize [-d,--directory] [-l,--listfromstdin] [-i,--ignore fileextension, PDF/A errors] [--disable-file-logging] | [-h,--help] 
+        --action license   display open source license and notice
+        --action metrics
+          -d, --directory count ZUGFeRD files in directory to be scanned
+                If it is a directory, it will recurse.
+          -l, --listfromstdin     count ZUGFeRD files from a list of linefeed separated files on runtime.
+                It will start once a blank line has been entered.
+
+        Additional parameter for both count operations
+        [-i, --ignorefileextension]     Check for all files (*.*) instead of PDF files only (*.pdf) in metrics, ignore PDF/A input file errors in combine
+        [--disable-file-logging]                disable logging to file.
+        --action extract   extract Factur-X PDF to XML file
+                Additional parameters (optional - user will be prompted if not defined)
+                [--source <filename>]: set input PDF file
+                [--out <filename>]: set output XML file
+        --action a3only    upgrade from PDF/A1 to A3 only (no ZUGFeRD data attached)
+                Additional parameters (optional - user will be prompted if not defined)
+                [--source <filename>]: set input PDF file
+                [--out <filename>]: set output PDF file
+        --action combine   combine XML and PDF file to Factur-X PDF file
+                Additional parameters (optional - user will be prompted if not defined)
+                [--source <filename>]: set input PDF file
+                [--source-xml <filename>]: set input XML file
+                [--out <filename>]: set output PDF file
+                [--format <fx|zf|ox|da>]: set Factur-X, ZUGFeRD, Order-X or Cross Industry Despatch Advice
+                [--version <1|2>]: set ZUGFeRD version
+                [--profile <...>]: set ZUGFeRD profile
+                        For ZUGFeRD v1 or Order-X: <B>ASIC, <C>OMFORT or EX<T>ENDED
+                        For ZUGFeRD v2: <M>INIMUM, BASIC <W>L, <B>ASIC, <C>IUS, <E>N16931, <X>Rechnung, EX<T>ENDED
+                [--attachments <filenames>]: list of file attachments (passing a single empty file name prevents prompting)
+                [--no-additional-attachments]: prevent prompting for attachments
+        --action ubl  convert UN/CEFACT 2016b CII XML to UBL XML
+                [--source <filename>]: set input XML file
+                [--out <filename>]: set output XML file
+        --action upgrade  upgrade ZUGFeRD XML to ZUGFeRD 2 XML
+                Additional parameters (optional - user will be prompted if not defined)
+                [--source <filename>]: set input XML ZUGFeRD 1 file
+                [--out <filename>]: set output XML ZUGFeRD 2 file
+        --action validate  validate XML or PDF file 
+                [--no-notices]: refrain from reporting notices
+                [--logAppend <text>]: text to be added to log line
+                Additional parameters (optional - user will be prompted if not defined)
+                [--source <filename>]: input PDF or XML file
+                [--log-as-pdf]: save log output as pdf
+        --action validateExpectInvalid  validate directory recursively expecting negative results 
+                [--no-notices]: refrain from reporting notices
+                Additional parameters (user will be prompted if not defined)
+                                        -d, --directory to check recursively
+                Additional parameters (optional)
+                                        --exclude: comma-separated list of filenames to ignore
+        --action validateExpectValid  validate directory recursively expecting positive results 
+                [--no-notices]: refrain from reporting notices
+                Additional parameters (user will be prompted if not defined)
+                                        -d, --directory to check recursively 
+                Additional parameters (user will be prompted if not defined)
+                                        --exclude: comma-separated list of filenames to ignore
+        --action visualize  convert XML to HTML 
+                [--language <lang>]: set output lang (en, fr or de)
+                [--source <filename>]: set input XML file
+                [--out <filename>]: set output HTML file
+        --action pdf  convert XML to PDF 
+                [--source <filename>]: set input XML file
+                [--out <filename>]: set output PDF file
