@@ -1,5 +1,6 @@
 use crate::error::{MustangError, Result};
 use std::ffi::OsStr;
+use std::fs;
 use std::io::Write;
 use std::path::{Path, PathBuf};
 use tempfile::{NamedTempFile, TempPath};
@@ -75,6 +76,9 @@ impl FileOutput {
         let temp_file = NamedTempFile::new()
             .map_err(|e| MustangError::TempFile(format!("Failed to create temp file: {}", e)))?;
         let temp_path = temp_file.into_temp_path();
+        // delete the temp file now as mustang refuses to overwrite an existing file
+        fs::remove_file(&temp_path)
+            .map_err(|e| MustangError::TempFile(format!("Failed to delete temp file: {}", e)))?;
         Ok(Self::Temp(temp_path))
     }
 
@@ -89,5 +93,15 @@ impl FileOutput {
     /// Read the output file into bytes
     pub fn read_bytes(&self) -> Result<Vec<u8>> {
         std::fs::read(self.path()).map_err(MustangError::from)
+    }
+}
+
+#[cfg(test)]
+impl From<FileOutput> for FileInput {
+    fn from(output: FileOutput) -> Self {
+        match output {
+            FileOutput::Temp(t) => Self::Temp(t),
+            FileOutput::Path(p) => Self::Path(p),
+        }
     }
 }

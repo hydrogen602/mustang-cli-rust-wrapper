@@ -13,8 +13,8 @@ pub enum MustangError {
         stderr: String,
     },
 
-    #[error("Mustang CLI executable file not found: {0}")]
-    ExecutableNotFound(PathBuf),
+    #[error("Mustang CLI or java file not found: {0}")]
+    ExecutableOrJavaNotFound(io::Error),
 
     #[error("Invalid file path: {0}")]
     InvalidPath(PathBuf),
