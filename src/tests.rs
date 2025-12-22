@@ -1,6 +1,10 @@
 #[cfg(test)]
 mod tests {
-    use std::{fs, path::PathBuf};
+    use std::{
+        env::{self, VarError},
+        fs,
+        path::PathBuf,
+    };
 
     use rayon::iter::{IntoParallelIterator, ParallelIterator};
 
@@ -9,6 +13,18 @@ mod tests {
     struct Sample {
         path: PathBuf,
     }
+
+    // static LOCK: LazyLock<Mutex<()>> = LazyLock::new(|| Mutex::new(()));
+
+    // fn single_threaded_guard<'m>() -> Option<MutexGuard<'m, ()>> {
+    //     if env_flag("USE_TRACING_AGENT") {
+    //         println!("Running single threaded due to USE_TRACING_AGENT");
+    //         // run single threaded if tracing agent is enabled
+    //         Some(LOCK.lock().unwrap())
+    //     } else {
+    //         None
+    //     }
+    // }
 
     impl Sample {
         #[allow(unused)]
@@ -66,15 +82,56 @@ mod tests {
             .collect()
     }
 
+    fn env_flag(name: &str) -> bool {
+        match env::var(name) {
+            Ok(x) => {
+                let x = x.trim().to_ascii_lowercase();
+                if x == "" || x == "0" || x == "false" {
+                    false
+                } else {
+                    true
+                }
+            }
+            Err(VarError::NotPresent) => false,
+            Err(e) => panic!("Err: {}", e),
+        }
+    }
+
+    fn cli() -> MustangCLI {
+        let use_graalvm = env_flag("USE_GRAALVM");
+        println!("USE_GRAALVM: {}", use_graalvm);
+
+        if use_graalvm {
+            MustangCLI::from_graalvm_exe("Mustang-CLI-2.20.0")
+                .unwrap()
+                .with_log_print()
+        } else {
+            let tracing_agent = env_flag("USE_TRACING_AGENT");
+            println!("USE_TRACING_AGENT: {}", tracing_agent);
+
+            let mut java_args = vec![];
+            if tracing_agent {
+                java_args.push(OsString::from(
+                    "-agentlib:native-image-agent=config-output-dir=tracing-agent/dir-{pid}-{datetime}/",
+                ));
+            }
+
+            let java_path = env::var("JAVA_HOME").unwrap();
+            let java_path = Path::new(&java_path).join("bin/java");
+            MustangCLI::from_jar(java_path, "Mustang-CLI-2.20.0.jar", java_args)
+                .unwrap()
+                .with_log_print()
+        }
+    }
+
     #[test]
     fn test_extract_xml_from_pdf() {
         // let cli = MustangCLI::from_graalvm_exe("Mustang-CLI-2.20.0").unwrap();
-        let cli = MustangCLI::from_jar(
-            "/usr/local/opt/openjdk@17/bin/java",
-            "Mustang-CLI-2.20.0.jar",
-        )
-        .unwrap()
-        .with_log_print();
+        let cli = cli();
+
+        // let _ = single_threaded_guard();
+
+        let tracing_agent = env_flag("USE_TRACING_AGENT");
 
         let samples = all_samples();
         assert!(samples.len() > 20);
@@ -117,12 +174,9 @@ mod tests {
 
     #[test]
     fn test_add_xml_to_pdf() {
-        let cli = MustangCLI::from_jar(
-            "/usr/local/opt/openjdk@17/bin/java",
-            "Mustang-CLI-2.20.0.jar",
-        )
-        .unwrap()
-        .with_log_print();
+        let cli = cli();
+
+        // let _ = single_threaded_guard();
 
         let samples = all_samples().into_iter().next().unwrap();
         let input = FileInput::from_path(samples.xml()).unwrap();
@@ -155,12 +209,9 @@ mod tests {
 
     #[test]
     fn test_validate() {
-        let cli = MustangCLI::from_jar(
-            "/usr/local/opt/openjdk@17/bin/java",
-            "Mustang-CLI-2.20.0.jar",
-        )
-        .unwrap()
-        .with_log_print();
+        let cli = cli();
+
+        // let _ = single_threaded_guard();
 
         let sample = all_samples().into_iter().next().unwrap();
         let input = FileInput::from_path(sample.xml()).unwrap();

@@ -1,5 +1,5 @@
 use std::{
-    ffi::OsStr,
+    ffi::{OsStr, OsString},
     path::{Path, PathBuf},
     process::{Command, Output},
 };
@@ -37,6 +37,7 @@ pub enum RunnerMustangCLI {
     Jar {
         java_path: PathBuf,
         jar_path: PathBuf,
+        java_args: Vec<OsString>,
     },
 }
 
@@ -61,6 +62,7 @@ impl MustangCLI {
     pub fn from_jar(
         java_path: impl AsRef<Path>,
         jar_path: impl AsRef<Path>,
+        java_args: Vec<OsString>,
     ) -> Result<Self, MustangError> {
         let java_path = java_path
             .as_ref()
@@ -75,6 +77,7 @@ impl MustangCLI {
             runner: RunnerMustangCLI::Jar {
                 java_path,
                 jar_path,
+                java_args,
             },
             log_print: false,
         })
@@ -190,13 +193,15 @@ impl MustangCLI {
             RunnerMustangCLI::Jar {
                 java_path,
                 jar_path,
+                java_args,
             } => {
                 let mut c = Command::new(java_path);
+                c.args(java_args);
                 c.arg("-jar").arg(jar_path);
                 c
             }
         };
-        c.arg("--action").arg(action);
+        c.args(args!("--action", &action, "--disable-file-logging"));
         c
     }
 
