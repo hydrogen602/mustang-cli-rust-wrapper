@@ -28,6 +28,14 @@
     @org.mustangproject.** *;
 }
 
+# Keep Apache Commons Logging classes used via reflection (see manual_reflectconfig.json)
+-keep class org.apache.commons.logging.impl.LogFactoryImpl { *; }
+-keep class org.apache.commons.logging.LogFactory { *; }
+-keep class org.apache.commons.logging.impl.SimpleLog { *; }
+
+# Keep SLF4J API and simple backend (provider is discovered via ServiceLoader)
+-keep class org.slf4j.** { *; }
+
 # Keep Eclipse Angus Activation classes (required for native image)
 -keep class org.eclipse.angus.activation.** { *; }
 -keep class org.eclipse.angus.activation.nativeimage.** { *; }

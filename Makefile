@@ -90,10 +90,6 @@ tracing-agent-raw-data:
 $(GRAALVM_BIN)/native-image-configure:
 	$(GRAALVM_BIN)/native-image --macro:native-image-configure-launcher
 
-META-INF/native-image/reachability-metadata.json: tracing-agent/combined/reachability-metadata.json
-	mkdir -p $(dir $@)
-	cp $< $@
-
 tracing-agent/combined/reachability-metadata.json: $(GRAALVM_BIN)/native-image-configure
 	$(GRAALVM_BIN)/native-image-configure generate \
 		$(shell find tracing-agent/ -type d -exec echo --input-dir={}/ \; | tr '\n' ' ') \
@@ -104,4 +100,8 @@ test-graalvm:
 	export USE_TRACING_AGENT=false && \
 	cargo test
 
-
+test-jre:
+	export JAVA_HOME=$(JRE_DIR) && \
+	export USE_GRAALVM=false && \
+	export USE_TRACING_AGENT=false && \
+	cargo test
