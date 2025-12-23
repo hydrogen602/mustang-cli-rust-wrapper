@@ -20,7 +20,7 @@ fn main() {
 
     build_jre();
 
-    panic!("{}", out_dir.display());
+    // panic!("{}", out_dir.display());
 }
 
 fn build_jre() {
