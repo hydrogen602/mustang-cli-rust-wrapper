@@ -5,11 +5,34 @@ FILE_REDUCED := $(FILE_NO_EXT)-reduced.jar
 JBIN := /usr/local/opt/openjdk@17/bin
 JRE_DIR := jre
 JDK_HOME := /usr/local/opt/openjdk@17
+JLINK_JMODS := $(JDK_HOME)/jmods
+JLINK := $(JDK_HOME)/bin/jlink
 
 GRAALVM_HOME := ~/opt/graalvm-jdk-25.0.1+8.1/Contents/Home
 GRAALVM_BIN := $(GRAALVM_HOME)/bin
+GRAALVM_LIBS := $(GRAALVM_HOME)/lib
 REFLECTCONFIG := manual_reflectconfig.json
-GRAALVM_FLAGS := -H:+UnlockExperimentalVMOptions -H:+AddAllCharsets -H:ReflectionConfigurationFiles=$(REFLECTCONFIG) -H:ConfigurationFileDirectories=tracing-agent/combined/ -Djava.awt.headless=true 
+GRAALVM_FLAGS := -H:+UnlockExperimentalVMOptions -H:+AddAllCharsets -H:+IncludeAllLocales \
+	-H:ReflectionConfigurationFiles=$(REFLECTCONFIG) -H:ConfigurationFileDirectories=tracing-agent/combined/ \
+	-Djava.awt.headless=true -Dfile.encoding=UTF-8 \
+	--initialize-at-build-time=java.nio.charset.Charset,java.nio.charset.StandardCharsets,sun.nio.cs.UTF_8,sun.nio.cs.Unicode \
+	--initialize-at-run-time=org.apache.pdfbox.pdmodel.font.PDFont,org.apache.pdfbox.pdmodel.font.FileSystemFontProvider,org.apache.pdfbox.pdmodel.font.FontMapperImpl \
+  --initialize-at-run-time=java.awt.Toolkit,sun.awt.apple.LAWTToolkit,sun.font.FontManagerNativeLibrary \
+  --initialize-at-build-time=org.apache.pdfbox.util.Charsets \
+	--initialize-at-run-time=org.apache.pdfbox.pdmodel.PDDocument \
+	--initialize-at-run-time=java.awt.image.ColorModel \
+	--initialize-at-run-time=java.awt.image.Raster \
+	--initialize-at-run-time=java.awt.image.SampleModel \
+	--initialize-at-run-time=java.awt.image.IndexColorModel \
+	--initialize-at-run-time=org.apache.pdfbox.pdmodel.PDDocument \
+--initialize-at-run-time=org.apache.pdfbox.pdfparser.PDFParser \
+--initialize-at-run-time=org.apache.pdfbox.Loader \
+--initialize-at-run-time=java.awt.image.ColorModel \
+--initialize-at-run-time=java.awt.image.Raster \
+--initialize-at-run-time=java.awt.image.SampleModel \
+--initialize-at-run-time=java.awt.color.ColorSpace \
+--initialize-at-run-time=sun.java2d.Disposer \
+	-H:NativeLinkerOption="-Wl,-rpath,~/opt/graalvm-jdk-25.0.1+8.1/Contents/Home/lib"
 
 PROGUARD_HOME := ~/opt/proguard-7.6.1
 
@@ -17,18 +40,22 @@ JDEPS = $(shell cat jdeps.txt)
 
 .PHONY: clean run deps
 
+build-jre: $(JRE_DIR)
+
 $(JRE_DIR): jdeps.txt
 	@echo "Creating custom JRE with jlink..."
 	rm -rf $(JRE_DIR)
-	$(JBIN)/jlink \
-		--module-path $(JDK_HOME)/jmods \
+	$(JLINK) \
+		--module-path $(JLINK_JMODS) \
 		--add-modules $(JDEPS) \
-
 		--output $(JRE_DIR) \
 		--strip-debug \
 		--no-man-pages \
 		--no-header-files \
 		--compress=2
+
+print-jre-java-bin:
+	@echo $(JRE_DIR)/bin/java
 
 run: $(JRE_DIR)
 	$(JRE_DIR)/bin/java -jar $(FILE)
@@ -71,7 +98,11 @@ $(FILE_NO_EXT): $(FILE) Makefile $(REFLECTCONFIG)
 $(FILE_NO_EXT)-reduced: $(FILE_REDUCED) Makefile $(REFLECTCONFIG)
 	$(GRAALVM_BIN)/native-image $(GRAALVM_FLAGS) -jar $< -o $@
 
-.PHONY: tracing-agent
+.PHONY: tracing-agent clean-jre
+
+clean-jre:
+	rm -rf $(JRE_DIR)
+	rm -f jdeps.txt
 
 tracing-agent:
 	+$(MAKE) tracing-agent-raw-data
@@ -98,6 +129,8 @@ tracing-agent/combined/reachability-metadata.json: $(GRAALVM_BIN)/native-image-c
 test-graalvm:
 	export USE_GRAALVM=true && \
 	export USE_TRACING_AGENT=false && \
+	export LD_LIBRARY_PATH=~/opt/graalvm-jdk-25.0.1+8.1/Contents/Home/lib:~/opt/graalvm-jdk-25.0.1+8.1/Contents/Home/lib/server && \
+	export DYLD_LIBRARY_PATH=~/opt/graalvm-jdk-25.0.1+8.1/Contents/Home/lib:~/opt/graalvm-jdk-25.0.1+8.1/Contents/Home/lib/server && \
 	cargo test
 
 test-jre:
@@ -105,3 +138,4 @@ test-jre:
 	export USE_GRAALVM=false && \
 	export USE_TRACING_AGENT=false && \
 	cargo test
+

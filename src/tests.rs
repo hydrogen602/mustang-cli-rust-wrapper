@@ -102,7 +102,7 @@ mod tests {
         println!("USE_GRAALVM: {}", use_graalvm);
 
         if use_graalvm {
-            let extra_args: Vec<OsString> = vec![]; //"-Djava.awt.headless=true".into()];
+            let extra_args: Vec<OsString> = vec!["-Djava.awt.headless=true".into()];
 
             MustangCLI::from_graalvm_exe("Mustang-CLI-2.20.0", extra_args)
                 .unwrap()
@@ -114,7 +114,7 @@ mod tests {
             let mut java_args = vec![];
             if tracing_agent {
                 java_args.push(OsString::from(
-                    "-agentlib:native-image-agent=config-output-dir=tracing-agent/dir-{pid}-{datetime}/",
+                    "-agentlib:native-image-agent=config-output-dir=tracing-agent/dir-{pid}-{datetime}/,experimental-class-define-support",
                 ));
             }
 
