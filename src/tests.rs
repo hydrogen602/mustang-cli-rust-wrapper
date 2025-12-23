@@ -102,7 +102,9 @@ mod tests {
         println!("USE_GRAALVM: {}", use_graalvm);
 
         if use_graalvm {
-            MustangCLI::from_graalvm_exe("Mustang-CLI-2.20.0")
+            let extra_args: Vec<OsString> = vec![]; //"-Djava.awt.headless=true".into()];
+
+            MustangCLI::from_graalvm_exe("Mustang-CLI-2.20.0", extra_args)
                 .unwrap()
                 .with_log_print()
         } else {

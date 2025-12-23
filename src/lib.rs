@@ -33,7 +33,10 @@ pub struct MustangCLI {
 #[derive(Debug)]
 pub enum RunnerMustangCLI {
     /// e.g. for GraalVM native-image
-    Exe(PathBuf),
+    Exe {
+        bin: PathBuf,
+        extra_args: Vec<OsString>,
+    },
     Jar {
         java_path: PathBuf,
         jar_path: PathBuf,
@@ -47,14 +50,20 @@ impl MustangCLI {
         self
     }
 
-    pub fn from_graalvm_exe(graalvm_bin: impl AsRef<Path>) -> Result<Self, MustangError> {
+    pub fn from_graalvm_exe(
+        graalvm_bin: impl AsRef<Path>,
+        extra_args: Vec<OsString>,
+    ) -> Result<Self, MustangError> {
         let graalvm_bin = graalvm_bin
             .as_ref()
             .canonicalize()
             .map_err(MustangError::ExecutableOrJavaNotFound)?;
 
         Ok(Self {
-            runner: RunnerMustangCLI::Exe(graalvm_bin),
+            runner: RunnerMustangCLI::Exe {
+                bin: graalvm_bin,
+                extra_args,
+            },
             log_print: false,
         })
     }
@@ -189,7 +198,11 @@ impl MustangCLI {
 
     fn start_command(&self, action: Action) -> Command {
         let mut c = match &self.runner {
-            RunnerMustangCLI::Exe(graalvm_bin) => Command::new(graalvm_bin),
+            RunnerMustangCLI::Exe { bin, extra_args } => {
+                let mut c = Command::new(bin);
+                c.args(extra_args);
+                c
+            }
             RunnerMustangCLI::Jar {
                 java_path,
                 jar_path,

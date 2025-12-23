@@ -9,7 +9,7 @@ JDK_HOME := /usr/local/opt/openjdk@17
 GRAALVM_HOME := ~/opt/graalvm-jdk-25.0.1+8.1/Contents/Home
 GRAALVM_BIN := $(GRAALVM_HOME)/bin
 REFLECTCONFIG := manual_reflectconfig.json
-GRAALVM_FLAGS := -H:+UnlockExperimentalVMOptions -H:+AddAllCharsets -H:ReflectionConfigurationFiles=$(REFLECTCONFIG) -H:ConfigurationFileDirectories=tracing-agent/combined/ -Djava.awt.headless=false 
+GRAALVM_FLAGS := -H:+UnlockExperimentalVMOptions -H:+AddAllCharsets -H:ReflectionConfigurationFiles=$(REFLECTCONFIG) -H:ConfigurationFileDirectories=tracing-agent/combined/ -Djava.awt.headless=true 
 
 PROGUARD_HOME := ~/opt/proguard-7.6.1
 
@@ -99,3 +99,9 @@ tracing-agent/combined/reachability-metadata.json: $(GRAALVM_BIN)/native-image-c
 		$(shell find tracing-agent/ -type d -exec echo --input-dir={}/ \; | tr '\n' ' ') \
 		--output-dir=tracing-agent/combined
 	
+test-graalvm:
+	export USE_GRAALVM=true && \
+	export USE_TRACING_AGENT=false && \
+	cargo test
+
+
