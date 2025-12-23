@@ -13,6 +13,8 @@ use crate::{
 pub mod defs;
 pub mod error;
 pub mod file_handle;
+#[cfg(feature = "jlink")]
+pub mod file_utils;
 mod tests;
 
 macro_rules! args {
