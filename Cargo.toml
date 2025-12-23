@@ -13,3 +13,6 @@ clap = { version = "4.5.53", features = ["derive"] }
 glob = "0.3.3"
 diff = "0.1.13"
 rayon = "1.11.0"
+
+[features]
+jlink = []
