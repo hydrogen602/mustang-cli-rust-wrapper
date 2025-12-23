@@ -133,8 +133,6 @@ mod tests {
 
         // let _ = single_threaded_guard();
 
-        let tracing_agent = env_flag("USE_TRACING_AGENT");
-
         let samples = all_samples();
         assert!(samples.len() > 20);
         let one_sample = |sample: Sample| {

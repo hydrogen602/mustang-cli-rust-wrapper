@@ -30,6 +30,7 @@ macro_rules! args {
 pub struct MustangCLI {
     runner: RunnerMustangCLI,
     log_print: bool,
+    java_home: Option<PathBuf>,
 }
 
 #[derive(Debug)]
@@ -52,6 +53,11 @@ impl MustangCLI {
         self
     }
 
+    pub fn with_java_home(mut self, java_home: PathBuf) -> Self {
+        self.java_home = Some(java_home);
+        self
+    }
+
     pub fn from_graalvm_exe(
         graalvm_bin: impl AsRef<Path>,
         extra_args: Vec<OsString>,
@@ -67,6 +73,7 @@ impl MustangCLI {
                 extra_args,
             },
             log_print: false,
+            java_home: None,
         })
     }
 
@@ -91,6 +98,7 @@ impl MustangCLI {
                 java_args,
             },
             log_print: false,
+            java_home: None,
         })
     }
 
@@ -216,6 +224,9 @@ impl MustangCLI {
                 c
             }
         };
+        if let Some(java_home) = &self.java_home {
+            c.env("JAVA_HOME", java_home);
+        }
         c.args(args!("--action", &action, "--disable-file-logging"));
         c
     }
