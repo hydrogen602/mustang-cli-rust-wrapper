@@ -71,9 +71,10 @@ fn build_jre() {
     for keyword in keywords {
         assert!(
             file_output.contains(keyword),
-            "Running `file` on jlink's produced binary does not contain expected keyword: {}, likely it is the wrong architecture: {}",
+            "Running `file` on jlink's produced binary does not contain expected keyword: {}, likely it is the wrong architecture: {}. JAVA_HOME={}",
             keyword,
-            file_output
+            file_output,
+            java_home
         );
     }
 }
