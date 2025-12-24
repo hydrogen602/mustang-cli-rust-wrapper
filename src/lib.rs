@@ -47,6 +47,14 @@ pub enum RunnerMustangCLI {
     },
 }
 
+#[derive(Debug)]
+/// Result of a command execution
+/// exit status will always be success otherwise an error will be returned
+pub struct CommandResult {
+    pub stdout: String,
+    pub stderr: String,
+}
+
 impl MustangCLI {
     pub fn with_log_print(mut self) -> Self {
         self.log_print = true;
@@ -106,14 +114,18 @@ impl MustangCLI {
         &self,
         input: &FileInput,
         output: &mut FileOutput,
-    ) -> Result<(), MustangError> {
+    ) -> Result<CommandResult, MustangError> {
         self.run_command(
             Action::ExtractXmlFromPdf,
             args!("--source", input, "--out", output),
         )
     }
 
-    pub fn a3_only(&self, input: &FileInput, output: &mut FileOutput) -> Result<(), MustangError> {
+    pub fn a3_only(
+        &self,
+        input: &FileInput,
+        output: &mut FileOutput,
+    ) -> Result<CommandResult, MustangError> {
         self.run_command(Action::A3Only, args!("--source", input, "--out", output))
     }
 
@@ -125,7 +137,7 @@ impl MustangCLI {
         format: Format,
         profile_and_version: Config,
         attachments: &[FileInput],
-    ) -> Result<(), MustangError> {
+    ) -> Result<CommandResult, MustangError> {
         let attachments_str = attachments
             .iter()
             .map(|a| a.path().as_os_str())
@@ -153,11 +165,19 @@ impl MustangCLI {
         )
     }
 
-    pub fn ubl(&self, input: &FileInput, output: &mut FileOutput) -> Result<(), MustangError> {
+    pub fn ubl(
+        &self,
+        input: &FileInput,
+        output: &mut FileOutput,
+    ) -> Result<CommandResult, MustangError> {
         self.run_command(Action::Ubl, args!("--source", input, "--out", output))
     }
 
-    pub fn upgrade(&self, input: &FileInput, output: &mut FileOutput) -> Result<(), MustangError> {
+    pub fn upgrade(
+        &self,
+        input: &FileInput,
+        output: &mut FileOutput,
+    ) -> Result<CommandResult, MustangError> {
         self.run_command(Action::Upgrade, args!("--source", input, "--out", output))
     }
 
@@ -167,7 +187,7 @@ impl MustangCLI {
         no_notices: bool,
         log_append: Option<&str>,
         log_as_pdf: bool,
-    ) -> Result<(), MustangError> {
+    ) -> Result<CommandResult, MustangError> {
         let mut args: Vec<&OsStr> = Vec::new();
         args.extend(args!("--source", input));
         if no_notices {
@@ -187,7 +207,7 @@ impl MustangCLI {
         input: &FileInput,
         output: &mut FileOutput,
         language: Language,
-    ) -> Result<(), MustangError> {
+    ) -> Result<CommandResult, MustangError> {
         self.run_command(
             Action::XmlToHtml,
             args!("--language", &language, "--source", input, "--out", output),
@@ -198,11 +218,11 @@ impl MustangCLI {
         &self,
         input: &FileInput,
         output: &mut FileOutput,
-    ) -> Result<(), MustangError> {
+    ) -> Result<CommandResult, MustangError> {
         self.run_command(Action::XmlToPdf, args!("--source", input, "--out", output))
     }
 
-    fn run_command(&self, action: Action, args: &[&OsStr]) -> Result<(), MustangError> {
+    fn run_command(&self, action: Action, args: &[&OsStr]) -> Result<CommandResult, MustangError> {
         self.handle_output(self.start_command(action).args(args).output()?)
     }
 
@@ -231,20 +251,21 @@ impl MustangCLI {
         c
     }
 
-    fn handle_output(&self, output: Output) -> Result<(), MustangError> {
-        let stdout = String::from_utf8_lossy(&output.stdout);
-        let stderr = String::from_utf8_lossy(&output.stderr);
+    fn handle_output(&self, output: Output) -> Result<CommandResult, MustangError> {
+        let stdout = String::from_utf8_lossy(&output.stdout).to_string();
+        let stderr = String::from_utf8_lossy(&output.stderr).to_string();
         if self.log_print {
             println!("Mustang CLI stdout:\n{}", stdout);
             println!("Mustang CLI stderr:\n{}", stderr);
         }
-        if !output.status.success() {
-            return Err(MustangError::ExecutionFailed {
+        if output.status.success() {
+            Ok(CommandResult { stdout, stderr })
+        } else {
+            Err(MustangError::ExecutionFailed {
                 status: output.status,
-                stdout: stdout.to_string(),
-                stderr: stderr.to_string(),
-            });
+                stdout,
+                stderr,
+            })
         }
-        Ok(())
     }
 }
