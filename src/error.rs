@@ -30,6 +30,12 @@ pub enum MustangError {
 
     #[error("Temporary file operation failed: {0}")]
     TempFile(String),
+
+    #[error("File already exists: {0} but overwrite is not allowed")]
+    FileAlreadyExists(PathBuf),
+
+    #[error("File is a directory: {0}")]
+    FileIsDirectory(PathBuf),
 }
 
 /// Result type alias for Mustang operations

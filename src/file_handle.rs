@@ -65,10 +65,64 @@ impl AsRef<OsStr> for FileOutput {
     }
 }
 
+#[cfg(test)]
+mod tests {
+    use std::{fs, path::Path};
+
+    use crate::file_handle::FileOutput;
+
+    #[test]
+    fn test_from_path() {
+        fs::write("test.txt", "for testing").unwrap();
+        assert!(FileOutput::from_path(Path::new("test.txt"), false).is_err());
+        assert!(fs::exists("test.txt").unwrap());
+        assert!(FileOutput::from_path(Path::new("test.txt"), true).is_ok());
+        assert!(!fs::exists("test.txt").unwrap());
+        fs::write("test.txt", "for testing").unwrap();
+        fs::create_dir_all("test_dir").unwrap();
+
+        for overwrite in [false, true] {
+            assert!(FileOutput::from_path(Path::new("test_dir"), overwrite).is_err());
+            assert!(FileOutput::from_path(Path::new("test_dir/"), overwrite).is_err());
+            assert!(FileOutput::from_path(Path::new("test_dir/test.txt"), overwrite).is_ok());
+            assert!(FileOutput::from_path(Path::new(""), overwrite).is_err());
+            assert!(FileOutput::from_path(Path::new("."), overwrite).is_err());
+        }
+    }
+}
+
 impl FileOutput {
     /// Create from a file path
-    pub fn from_path<P: AsRef<Path>>(path: P) -> Self {
-        Self::Path(path.as_ref().to_path_buf())
+    ///
+    /// If overwrite is true, this function will delete the file if it exists
+    /// - (mustang seems to refuse to overwrite an existing file)
+    pub fn from_path<P: AsRef<Path>>(path: P, overwrite: bool) -> Result<Self> {
+        let path = path.as_ref();
+        let Some(mut parent) = path.parent() else {
+            return Err(MustangError::InvalidPath(path.to_path_buf()));
+        };
+        if parent.as_os_str().is_empty() {
+            parent = Path::new(".");
+        }
+        let Some(file) = path.file_name() else {
+            return Err(MustangError::InvalidPath(path.to_path_buf()));
+        };
+        eprintln!("parent: {}", parent.display());
+        eprintln!("file: {}", file.display());
+        let parent = parent.canonicalize()?;
+
+        let path = parent.join(file);
+        if path.exists() {
+            if !overwrite {
+                return Err(MustangError::FileAlreadyExists(path));
+            }
+            let is_dir = path.is_dir();
+            if is_dir {
+                return Err(MustangError::FileIsDirectory(path));
+            }
+            fs::remove_file(&path)?;
+        }
+        Ok(Self::Path(path))
     }
 
     /// Create as a temporary file
