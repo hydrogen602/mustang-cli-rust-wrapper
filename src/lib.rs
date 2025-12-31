@@ -258,7 +258,9 @@ impl MustangCLI {
             println!("Mustang CLI stdout:\n{}", stdout);
             println!("Mustang CLI stderr:\n{}", stderr);
         }
-        if output.status.success() {
+        let error_mentioned = stderr.to_ascii_lowercase().contains("error")
+            || stdout.to_ascii_lowercase().contains("error");
+        if output.status.success() && !error_mentioned {
             Ok(CommandResult { stdout, stderr })
         } else {
             Err(MustangError::ExecutionFailed {
