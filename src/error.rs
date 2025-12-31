@@ -6,7 +6,7 @@ pub enum MustangError {
     #[error("IO error: {0}")]
     Io(#[from] io::Error),
 
-    #[error("Mustang CLI execution failed: {status}")]
+    #[error("Mustang CLI execution failed: {status}\n\n{stdout}\n\n{stderr}")]
     ExecutionFailed {
         status: ExitStatus,
         stdout: String,
