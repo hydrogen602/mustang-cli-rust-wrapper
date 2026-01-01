@@ -51,8 +51,7 @@ fn build_jre() {
     assert!(status.success(), "Failed to run make");
 
     // confirm its the right binary
-    if std::env::var("SKIP_BIN_CHECK").is_ok() {
-        println!("cargo:warning=SKIP_BIN_CHECK is set, skipping binary check");
+    if std::env::var("CARGO_FEATURE_SKIP_BIN_CHECK").is_ok() {
         return;
     }
 
