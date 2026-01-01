@@ -36,9 +36,6 @@ fn build_jre() {
     let java_home_arg = format!("JDK_HOME={}", java_home);
     let jmods_arg = jmods.map(|jmods| format!("JLINK_JMODS={}", jmods));
 
-    let target = std::env::var("TARGET").expect("TARGET is not set");
-    let keywords = target_translate(&target);
-
     let status = Command::new("make")
         .arg("clean-jre")
         .status()
@@ -54,6 +51,11 @@ fn build_jre() {
     assert!(status.success(), "Failed to run make");
 
     // confirm its the right binary
+    if std::env::var("SKIP_BIN_CHECK").is_ok() {
+        println!("cargo:warning=SKIP_BIN_CHECK is set, skipping binary check");
+        return;
+    }
+
     let make_output = Command::new("make")
         .arg("print-jre-java-bin")
         .output()
@@ -68,6 +70,9 @@ fn build_jre() {
         .expect("Failed to run file");
     assert!(file_output.status.success(), "Failed to run file");
     let file_output = String::from_utf8_lossy(&file_output.stdout);
+
+    let target = std::env::var("TARGET").expect("TARGET is not set");
+    let keywords = target_translate(&target);
     for keyword in keywords {
         assert!(
             file_output.contains(keyword),
@@ -85,6 +90,8 @@ fn target_translate(target: &str) -> &'static [&'static str] {
     match target {
         "aarch64-apple-darwin" => &["Mach-O", "64-bit", "arm64"],
         "x86_64-apple-darwin" => &["Mach-O", "64-bit", "x86_64"],
+        "aarch64-unknown-linux-gnu" => &["ELF", "64-bit", "aarch64"],
+        "x86_64-unknown-linux-gnu" => &["ELF", "64-bit", "x86-64"],
         _ => panic!("Unsupported target: {}", target),
     }
 }
