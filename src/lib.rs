@@ -4,6 +4,8 @@ use std::{
     process::{Command, Output},
 };
 
+use regex::RegexBuilder;
+
 use crate::{
     defs::{Action, Config, Format, Language, Versioned},
     error::MustangError,
@@ -258,8 +260,12 @@ impl MustangCLI {
             println!("Mustang CLI stdout:\n{}", stdout);
             println!("Mustang CLI stderr:\n{}", stderr);
         }
-        let error_mentioned = stderr.to_ascii_lowercase().contains("error")
-            || stdout.to_ascii_lowercase().contains("error");
+
+        let err_regex = RegexBuilder::new(r"\berror\b")
+            .case_insensitive(true)
+            .build()?;
+        let error_mentioned = err_regex.is_match(&stderr) || err_regex.is_match(&stdout);
+
         if output.status.success() && !error_mentioned {
             Ok(CommandResult { stdout, stderr })
         } else {
