@@ -6,7 +6,7 @@ JRE_DIR := jre
 JDK_HOME := /usr/local/opt/openjdk@17
 JBIN := $(JDK_HOME)/bin
 JLINK_JMODS := $(JDK_HOME)/jmods
-JLINK := $(JDK_HOME)/bin/jlink
+JLINK := $(JBIN)/jlink
 
 GRAALVM_HOME := ~/opt/graalvm-jdk-25.0.1+8.1/Contents/Home
 GRAALVM_BIN := $(GRAALVM_HOME)/bin
@@ -41,6 +41,24 @@ JDEPS = $(shell cat jdeps.txt)
 .PHONY: clean run deps
 
 build-jre: $(JRE_DIR)
+
+build-jre-debug: 
+	@echo "JRE_DIR: $(JRE_DIR)"
+	@echo "JLINK_JMODS: $(JLINK_JMODS)"
+	@echo "JDEPS: $(JDEPS)"
+	@echo "JBIN: $(JBIN)"
+	@echo "JLINK: $(JLINK)"
+	@echo "PROGUARD_HOME: $(PROGUARD_HOME)"
+	@echo "GRAALVM_HOME: $(GRAALVM_HOME)"
+	@echo "GRAALVM_BIN: $(GRAALVM_BIN)"
+	@echo "GRAALVM_LIBS: $(GRAALVM_LIBS)"
+	@echo "REFLECTCONFIG: $(REFLECTCONFIG)"
+	@echo "GRAALVM_FLAGS: $(GRAALVM_FLAGS)"
+	@echo "JAVA_HOME: $(JAVA_HOME)"
+	@echo "JDK_HOME: $(JDK_HOME)"
+	@echo "FILE: $(FILE)"
+	@echo "FILE_REDUCED: $(FILE_REDUCED)"
+	+$(MAKE) build-jre
 
 $(JRE_DIR): jdeps.txt
 	@echo "Creating custom JRE with jlink..."

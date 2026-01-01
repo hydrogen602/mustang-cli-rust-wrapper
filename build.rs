@@ -42,10 +42,16 @@ fn build_jre() {
         .expect("Failed to run make");
     assert!(status.success(), "Failed to run make");
 
+    let command = if std::env::var("CI").is_ok() {
+        "build-jre-debug"
+    } else {
+        "build-jre"
+    };
+
     let status = Command::new("make")
         .arg(java_home_arg)
         .args(jmods_arg)
-        .arg("build-jre")
+        .arg(command)
         .status()
         .expect("Failed to run make");
     assert!(status.success(), "Failed to run make");
