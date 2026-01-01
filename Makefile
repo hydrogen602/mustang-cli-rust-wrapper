@@ -2,9 +2,9 @@ FILE := Mustang-CLI-2.20.0.jar
 FILE_NO_EXT := $(basename $(FILE))
 FILE_REDUCED := $(FILE_NO_EXT)-reduced.jar
 
-JBIN := /usr/local/opt/openjdk@17/bin
 JRE_DIR := jre
 JDK_HOME := /usr/local/opt/openjdk@17
+JBIN := $(JDK_HOME)/bin
 JLINK_JMODS := $(JDK_HOME)/jmods
 JLINK := $(JDK_HOME)/bin/jlink
 
