@@ -36,7 +36,7 @@ fn build_jre() {
     let java_home_arg = format!("JDK_HOME={}", java_home);
     let jmods_arg = jmods.map(|jmods| format!("JLINK_JMODS={}", jmods));
 
-    let status = Command::new("make")
+    let status = make()
         .arg("clean-jre")
         .status()
         .expect("Failed to run make");
@@ -48,7 +48,7 @@ fn build_jre() {
         "build-jre"
     };
 
-    let status = Command::new("make")
+    let status = make()
         .arg(java_home_arg)
         .args(jmods_arg)
         .arg(command)
@@ -61,7 +61,7 @@ fn build_jre() {
         return;
     }
 
-    let make_output = Command::new("make")
+    let make_output = make()
         .arg("print-jre-java-bin")
         .output()
         .expect("Failed to run make");
@@ -99,4 +99,15 @@ fn target_translate(target: &str) -> &'static [&'static str] {
         "x86_64-unknown-linux-gnu" => &["ELF", "64-bit", "x86-64"],
         _ => panic!("Unsupported target: {}", target),
     }
+}
+
+/// `make` without the parent make's MAKEFLAGS: a parent `make -j` advertises
+/// jobserver fds that don't survive to this process, so the child make would
+/// fail with "Bad file descriptor".
+fn make() -> Command {
+    let mut cmd = Command::new("make");
+    cmd.env_remove("MAKEFLAGS")
+        .env_remove("MFLAGS")
+        .env_remove("MAKELEVEL");
+    cmd
 }
